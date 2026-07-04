@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0B1128">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SunPath">
+<meta name="format-detection" content="telephone=no">
+<title>晷 · SunPath — 太阳方位 / 影子 / AR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="glyph">晷</div><div><h1>Sun<span>Path</span></h1><p>地图 · 时间轴 · 实时影子 · AR</p></div></div>
+    <div class="tabs">
+      <button class="tab on" data-view="map">🗺 地图</button>
+      <button class="tab" data-view="ar">📷 AR</button>
+    </div>
+  </header>
+
+  <div id="mapView">
+    <div class="mapwrap">
+      <div id="map"></div>
+      <div class="mapfail" id="mapfail">地图瓦片未加载（预览沙盒或离线环境会拦截外部地图）。<br>部署到线上后即可正常显示地图、搜索与影子叠加。<br>下方罗盘、高度曲线与全部数值不依赖地图，始终可用。</div>
+      <div class="searchbar">
+        <input class="q" id="q" placeholder="搜索地名（如 Tower Bridge）…" aria-label="搜索地名" enterkeyhint="search">
+        <button class="mini" id="searchBtn">搜索</button>
+        <button class="mini gold" id="geoBtn">📍 定位</button>
+        <button class="mini" id="coordBtn">坐标</button>
+      </div>
+    </div>
+
+    <div class="dock">
+      <div class="phase">
+        <span class="pill" id="phasePill"><i style="background:var(--gold)"></i><span id="phaseName">—</span></span>
+        <span class="next" id="nextEvt"></span>
+        <button class="share" id="shareBtn">🔗 分享机位</button>
+      </div>
+      <div class="dockrow">
+        <button class="nav" id="prevDay" aria-label="前一天">‹</button>
+        <input type="date" id="datePick" aria-label="日期">
+        <button class="nav" id="nextDay" aria-label="后一天">›</button>
+        <div class="tlabel" id="tlabel">12:00</div>
+        <button class="ctl" id="playBtn">▶ 播放</button>
+        <button class="ctl" id="liveBtn">🔴 实时</button>
+      </div>
+      <div class="dockrow">
+        <input type="range" id="tslider" min="0" max="1439" value="720" aria-label="时间轴">
+      </div>
+      <div class="jumps" id="jumps"></div>
+      <div class="dockrow" style="margin-top:12px">
+        <div class="hbox">物体高度 <input type="range" class="hslider" id="hslider" min="1" max="80" value="10"> <b id="hval">10 m</b></div>
+        <div class="hbox" style="margin-left:auto">影子 <b id="shadowInfo">—</b></div>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>方位罗盘 · 太阳轨迹</h2>
+        <svg id="compass" viewBox="0 0 360 360" role="img" aria-label="太阳方位罗盘"></svg>
+        <div class="leg">
+          <span><i class="dot" style="background:var(--gold)"></i>日出</span>
+          <span><i class="dot" style="background:var(--rose)"></i>日落</span>
+          <span><i class="dot" style="background:#fff"></i>此刻</span>
+          <span><i class="dot" style="background:#5B8FD6"></i>影子</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>全天太阳高度 · 光线阶段</h2>
+        <svg id="skyarc" viewBox="0 0 560 300" role="img" aria-label="太阳高度曲线"></svg>
+        <div class="leg">
+          <span><i class="sw" style="background:#243a6e"></i>暮光</span>
+          <span><i class="sw" style="background:#3f63a8"></i>蓝调</span>
+          <span><i class="sw" style="background:#e8a33d"></i>黄金</span>
+          <span><i class="sw" style="background:#7fa8dd"></i>白昼</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="arView" class="hidden">
+    <div class="arwrap" id="arwrap">
+      <video id="arvid" playsinline muted></video>
+      <canvas id="arcanvas"></canvas>
+      <div class="arhud" id="arhud"></div>
+      <div class="armsg" id="armsg"></div>
+      <div class="arstart" id="arstart">
+        <div class="glyph" style="font-size:42px">📷</div>
+        <h3>AR 太阳轨迹投影</h3>
+        <p>举起手机对准天空，屏幕叠加太阳全天轨迹与当前位置。需在<b>手机浏览器</b>、<b>HTTPS 线上环境</b>下运行并授权<b>相机</b>与<b>方向传感器</b>；竖屏使用最准。</p>
+        <button class="mini gold" id="arStartBtn" style="min-height:48px;padding:0 24px;font-size:15px">开启相机与传感器</button>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:9px">AR 与定位需要 HTTPS —— 用下面的方式部署后，在手机浏览器打开本页即可。</p>
+  </div>
+
+  <footer>时间按设备时区 · 方位以正北 0° 顺时针 · 地图 © OpenStreetMap · 天文计算基于 SunCalc 算法。城市高楼会提前遮挡地平线，请结合现场判断。</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/suncalc.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
