@@ -85,15 +85,26 @@
   .leg span{display:inline-flex;align-items:center;gap:5px}
   .dot{width:8px;height:8px;border-radius:50%;display:inline-block}.sw{width:13px;height:8px;border-radius:3px;display:inline-block}
 
-  .arwrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);height:min(72vh,660px);background:#000}
+  .arstage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);height:min(48vh,440px);background:#05070f;display:grid;place-items:center}
   #arvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   #arcanvas{position:absolute;inset:0;width:100%;height:100%}
-  .arstart{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:15px;text-align:center;padding:26px;background:radial-gradient(circle at 50% 40%,rgba(20,28,60,.9),rgba(8,12,30,.97));z-index:10}
-  .arstart h3{font-size:20px;font-weight:700}
-  .arstart p{font-size:13px;color:var(--muted);max-width:440px;line-height:1.7}
-  .arstart b{color:var(--gold-soft)}
-  .armsg{position:absolute;bottom:calc(12px + var(--safe-b));left:12px;right:12px;background:rgba(8,12,30,.88);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--rose);z-index:11;text-align:center;backdrop-filter:blur(6px);display:none;line-height:1.6}
-  .arhud{position:absolute;top:calc(12px + var(--safe-t));left:12px;background:rgba(8,12,30,.82);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:12px;z-index:11;backdrop-filter:blur(6px);display:none;line-height:1.65}
+  .arcamstart{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border:none;font-weight:600;border-radius:12px;min-height:48px;padding:0 22px;font-size:15px;z-index:9}
+  .artopbtns{position:absolute;top:calc(10px + var(--safe-t));right:10px;display:flex;gap:7px;z-index:11}
+  .arbtn{background:rgba(8,12,30,.82);border:1px solid var(--line);color:var(--ink);border-radius:10px;min-height:40px;padding:0 13px;font-size:13px;font-weight:500;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:6px}
+  .arbtn:active{transform:scale(.96)}
+  .arbtn.on{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border:none;font-weight:600}
+  .arbtn.sm{min-width:44px;justify-content:center;padding:0 12px}
+  .armsg{position:absolute;bottom:12px;left:12px;right:12px;background:rgba(8,12,30,.9);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--rose);z-index:12;text-align:center;backdrop-filter:blur(6px);display:none;line-height:1.6}
+  .arhud{position:absolute;top:calc(10px + var(--safe-t));left:12px;background:rgba(8,12,30,.82);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:12px;z-index:11;backdrop-filter:blur(6px);display:none;line-height:1.65}
+  .arctrl{display:flex;align-items:center;gap:11px;margin-top:12px;background:linear-gradient(180deg,rgba(28,38,80,.5),rgba(21,28,59,.5));border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .artlabel{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;min-width:64px}
+  .arplan{display:flex;align-items:center;gap:16px;margin-top:12px;background:linear-gradient(180deg,rgba(28,38,80,.5),rgba(21,28,59,.5));border:1px solid var(--line);border-radius:14px;padding:14px}
+  #arcompass{width:130px;height:130px;flex:none}
+  .arplaninfo{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+  .arplaninfo .pl{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(41,53,103,.5);padding-bottom:6px}
+  .arplaninfo .pl:last-child{border-bottom:none;padding-bottom:0}
+  .arplaninfo .pl b{font-family:'JetBrains Mono',monospace;color:var(--ink);font-weight:500;font-size:13.5px}
+  .arnote{font-size:12px;color:var(--muted);line-height:1.75;margin-top:12px;background:var(--sky);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 
   footer{margin-top:16px;font-size:11px;color:var(--muted-2);line-height:1.7;text-align:center}
   .hidden{display:none!important}

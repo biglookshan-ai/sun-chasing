@@ -160,47 +160,100 @@ $('searchBtn').onclick=doSearch;$('q').addEventListener('keydown',e=>{if(e.key==
 $('shareBtn').onclick=async()=>{saveHash();const url=location.href;try{if(navigator.share){await navigator.share({title:'SunPath 机位',url});}else{await navigator.clipboard.writeText(url);toast('链接已复制');}}catch(e){toast('链接：'+url);}};
 function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2200);}
 
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));b.classList.add('on');const v=b.dataset.view;$('mapView').classList.toggle('hidden',v!=='map');$('arView').classList.toggle('hidden',v!=='ar');if(v==='map'&&mapOK)setTimeout(()=>map.invalidateSize(),80);});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));b.classList.add('on');const v=b.dataset.view;$('mapView').classList.toggle('hidden',v!=='map');$('arView').classList.toggle('hidden',v!=='ar');if(v==='map'){renderAll();if(mapOK)setTimeout(()=>map.invalidateSize(),80);}else onArShown();});
 
 /* ===== AR ===== */
-let arActive=false,heading=0,camAlt=0,hSmooth=null;
+let arActive=false,arLock=false,arPlayT=null;
+let arYaw=null,arPitch=0,headOff=0,pitchOff=0;
 const arMsg=m=>{const el=$('armsg');el.textContent=m||'';el.style.display=m?'block':'none';};
-const scrAngle=()=>{try{return(screen.orientation&&screen.orientation.angle)||window.orientation||0;}catch(e){return 0;}};
+
+/* 由 alpha/beta/gamma 求相机(后置)光轴的方位角(yaw)与俯仰角(pitch)。
+   用完整旋转矩阵推导，跨手机姿态都成立——修正了旧版 beta-90 只在竖直时才对的问题。 */
+function cameraDir(a,b,g){
+  const A=a*rad,B=b*rad,G=g*rad;
+  const cA=Math.cos(A),sA=Math.sin(A),cB=Math.cos(B),sB=Math.sin(B),cG=Math.cos(G),sG=Math.sin(G);
+  const fx=-(cA*sG+cG*sA*sB),fy=-(sA*sG-cA*cG*sB),fz=-(cB*cG); // 相机前向在世界系(x东 y北 z上)
+  const yaw=(Math.atan2(fx,fy)/rad+360)%360;
+  const pitch=Math.asin(Math.max(-1,Math.min(1,fz)))/rad;
+  return{yaw,pitch};
+}
 function onOrient(ev){
-  let h=ev.webkitCompassHeading!=null?ev.webkitCompassHeading:(ev.alpha!=null?(360-ev.alpha):null);
-  if(h!=null){h=(h+scrAngle())%360;if(hSmooth==null)hSmooth=h;else{let d=((h-hSmooth+540)%360)-180;hSmooth=(hSmooth+d*0.25+360)%360;}heading=hSmooth;}
-  if(ev.beta!=null)camAlt=ev.beta-90;
+  if(ev.alpha==null&&ev.beta==null&&ev.gamma==null)return;
+  const cd=cameraDir(ev.alpha||0,ev.beta||0,ev.gamma||0);
+  if(arLock)return;
+  if(arYaw==null){arYaw=cd.yaw;arPitch=cd.pitch;}
+  else{let d=((cd.yaw-arYaw+540)%360)-180;arYaw=(arYaw+d*0.14+360)%360;arPitch+=(cd.pitch-arPitch)*0.14;} // 重平滑抑抖
 }
 $('arStartBtn').onclick=async()=>{
   arMsg('请求相机…');
   try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});$('arvid').srcObject=st;await $('arvid').play();}
-  catch(err){arMsg('无法访问相机（'+err.name+'）。需手机浏览器 + HTTPS 并授权相机。');return;}
-  try{if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')arMsg('未授权方向传感器，方位可能不准。');}}catch(e){}
+  catch(err){arMsg('无法访问相机（'+err.name+'）。需手机浏览器 + HTTPS 并授权相机。方位图与时间轴无需相机，可直接使用。');return;}
+  try{if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')arMsg('未授权方向传感器；请用「校准」对准太阳修正方位。');}}catch(e){}
+  window.addEventListener('deviceorientationabsolute',onOrient,true);
   window.addEventListener('deviceorientation',onOrient,true);
-  $('arstart').style.display='none';$('arhud').style.display='block';arActive=true;drawAR();
+  $('arStartBtn').style.display='none';$('arhud').style.display='block';arMsg('');arActive=true;drawAR();
 };
 function drawAR(){
   if(!arActive)return;
-  const cv=$('arcanvas'),v=$('arvid');cv.width=v.videoWidth||cv.clientWidth||360;cv.height=v.videoHeight||cv.clientHeight||640;
+  const cv=$('arcanvas'),v=$('arvid'),w=v.videoWidth||cv.clientWidth||360,h=v.videoHeight||cv.clientHeight||640;
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
   const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);
-  const hFov=62,vFov=hFov*cv.height/cv.width;
-  const proj=(az,alt)=>{let dA=((az-heading+540)%360)-180,dV=alt-camAlt;if(Math.abs(dA)>hFov*.72)return null;return[cv.width/2+(dA/(hFov/2))*(cv.width/2),cv.height/2-(dV/(vFov/2))*(cv.height/2)];};
-  // horizon + cardinals
-  ctx.strokeStyle='rgba(122,134,189,.5)';ctx.lineWidth=1.5;ctx.beginPath();
-  {const a=proj(heading-30,0),b=proj(heading+30,0);const y0=cv.height/2-((0-camAlt)/(vFov/2))*(cv.height/2);ctx.moveTo(0,y0);ctx.lineTo(cv.width,y0);ctx.stroke();
-   ctx.fillStyle='rgba(154,164,204,.9)';ctx.font='600 15px Space Grotesk';ctx.textAlign='center';
-   [['N',0],['E',90],['S',180],['W',270]].forEach(([lb,az])=>{const pr=proj(az,0);if(pr)ctx.fillText(lb,pr[0],y0+22);});}
-  // sun path with time ticks
+  const yaw=arYaw==null?0:arYaw,pitch=arPitch,hFov=64,vFov=hFov*cv.height/cv.width;
+  const proj=(az,alt)=>{let dA=((az-headOff-yaw+540)%360)-180,dV=(alt-pitchOff)-pitch;if(Math.abs(dA)>hFov*.78)return null;return[cv.width/2+(dA/(hFov/2))*(cv.width/2),cv.height/2-(dV/(vFov/2))*(cv.height/2)];};
+  // 地平线 + 方位
+  const y0=cv.height/2-(((0-pitchOff)-pitch)/(vFov/2))*(cv.height/2);
+  ctx.strokeStyle='rgba(122,134,189,.55)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,y0);ctx.lineTo(cv.width,y0);ctx.stroke();
+  ctx.font='700 16px Space Grotesk';ctx.textAlign='center';
+  [['N',0,'#F0B24A'],['NE',45,'#9aa4cc'],['E',90,'#9aa4cc'],['SE',135,'#9aa4cc'],['S',180,'#9aa4cc'],['SW',225,'#9aa4cc'],['W',270,'#9aa4cc'],['NW',315,'#9aa4cc']].forEach(([lb,az,c])=>{const pr=proj(az,0);if(pr){ctx.fillStyle=c;ctx.fillText(lb,pr[0],y0+24);ctx.fillRect(pr[0]-1,y0-5,2,10);}});
+  // 太阳全天轨迹
   ctx.lineWidth=3;ctx.strokeStyle='rgba(240,178,74,.9)';ctx.beginPath();let started=false;
-  for(let m=0;m<=1440;m+=6){const d=new Date(S.date);d.setHours(0,0,0,0);d.setMinutes(m);const q=getPos(d,S.lat,S.lng);if(altDeg(q.alt)<-2)continue;const pr=proj(azDeg(q.az),altDeg(q.alt));if(!pr){started=false;continue;}if(!started){ctx.moveTo(pr[0],pr[1]);started=true;}else ctx.lineTo(pr[0],pr[1]);}
+  for(let m=0;m<=1440;m+=6){const d=new Date(S.date);d.setHours(0,0,0,0);d.setMinutes(m);const q=getPos(d,S.lat,S.lng);if(altDeg(q.alt)<-3)continue;const pr=proj(azDeg(q.az),altDeg(q.alt));if(!pr){started=false;continue;}if(!started){ctx.moveTo(pr[0],pr[1]);started=true;}else ctx.lineTo(pr[0],pr[1]);}
   ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
-  for(let h=4;h<=20;h+=2){const d=new Date(S.date);d.setHours(h,0,0,0);const q=getPos(d,S.lat,S.lng);if(altDeg(q.alt)<0)continue;const pr=proj(azDeg(q.az),altDeg(q.alt));if(pr){ctx.beginPath();ctx.arc(pr[0],pr[1],3,0,7);ctx.fill();ctx.fillText(pad(h)+':00',pr[0],pr[1]-8);}}
-  // current sun
-  const p=getPos(activeDate(),S.lat,S.lng);if(altDeg(p.alt)>-2){const pr=proj(azDeg(p.az),altDeg(p.alt));if(pr){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(pr[0],pr[1],15,0,7);ctx.fill();ctx.strokeStyle='rgba(240,178,74,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(pr[0],pr[1],24,0,7);ctx.stroke();}}
-  $('arhud').innerHTML=`罗盘 ${Math.round(heading)}° · 仰角 ${camAlt.toFixed(0)}°<br>太阳 ${Math.round(azDeg(p.az))}° / ${altDeg(p.alt).toFixed(0)}°`;
+  // 整点刻度
+  ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='11px JetBrains Mono';
+  for(let hh=4;hh<=21;hh++){const d=new Date(S.date);d.setHours(hh,0,0,0);const q=getPos(d,S.lat,S.lng);if(altDeg(q.alt)<-1)continue;const pr=proj(azDeg(q.az),altDeg(q.alt));if(pr){ctx.beginPath();ctx.arc(pr[0],pr[1],2.5,0,7);ctx.fill();if(hh%2===0)ctx.fillText(pad(hh)+':00',pr[0],pr[1]-8);}}
+  // 当前太阳（随时间轴移动）
+  const p=getPos(activeDate(),S.lat,S.lng),sunAz=azDeg(p.az),alt=altDeg(p.alt);
+  if(alt>-3){const pr=proj(sunAz,alt);if(pr){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(pr[0],pr[1],15,0,7);ctx.fill();ctx.strokeStyle='rgba(240,178,74,.9)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(pr[0],pr[1],24,0,7);ctx.stroke();}}
+  // 中心校准准星
+  ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cv.width/2,cv.height/2,10,0,7);ctx.moveTo(cv.width/2-16,cv.height/2);ctx.lineTo(cv.width/2+16,cv.height/2);ctx.moveTo(cv.width/2,cv.height/2-16);ctx.lineTo(cv.width/2,cv.height/2+16);ctx.stroke();
+  $('arhud').innerHTML=`相机朝向 ${Math.round(yaw)}° · 仰角 ${pitch.toFixed(0)}°${arLock?' · 🔒锁定':''}<br>太阳 ${Math.round(sunAz)}° / ${alt.toFixed(0)}°`;
   requestAnimationFrame(drawAR);
 }
+/* 底部平面方位图（纯计算，不依赖传感器，始终准确） */
+function drawARPlan(){
+  const t=getTimes(activeDate(),S.lat,S.lng);
+  const p=getPos(activeDate(),S.lat,S.lng),sunAz=azDeg(p.az),alt=altDeg(p.alt);
+  const srAz=azDeg(getPos(t.sunrise,S.lat,S.lng).az),ssAz=azDeg(getPos(t.sunset,S.lat,S.lng).az);
+  const cx=78,cy=78,R=62,pt=(b,r)=>[cx+r*Math.sin(b*rad),cy-r*Math.cos(b*rad)];
+  let s=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0c1230" stroke="#3a478a" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="${R*.5}" fill="none" stroke="#243057" stroke-dasharray="2 4"/>`;
+  for(let d=0;d<360;d+=30){const[x1,y1]=pt(d,R),[x2,y2]=pt(d,R-6);s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#33407a"/>`;}
+  [['N',0,'#F0B24A'],['E',90,'#9aa4cc'],['S',180,'#9aa4cc'],['W',270,'#9aa4cc']].forEach(([lb,az,c])=>{const[x,y]=pt(az,R+10);s+=`<text x="${x}" y="${y}" fill="${c}" font-size="12" font-weight="700" text-anchor="middle" dominant-baseline="central">${lb}</text>`;});
+  const tick=(az,c)=>{const[x1,y1]=pt(az,R),[x2,y2]=pt(az,R-15);return`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2.5"/>`;};
+  s+=tick(srAz,'#F0B24A')+tick(ssAz,'#D98C7A');
+  if(alt>-.833){const[sx,sy]=pt(sunAz,R-6);s+=`<line x1="${cx}" y1="${cy}" x2="${sx}" y2="${sy}" stroke="#fff" stroke-width="3"/><circle cx="${sx}" cy="${sy}" r="5" fill="#fff"/>`;
+    const[bx,by]=pt((sunAz+180)%360,R-22);s+=`<line x1="${cx}" y1="${cy}" x2="${bx}" y2="${by}" stroke="#5B8FD6" stroke-width="3" opacity=".85"/>`;}
+  s+=`<circle cx="${cx}" cy="${cy}" r="3" fill="#5a68a8"/>`;
+  $('arcompass').innerHTML=s;
+  const up=alt>-.833,ph=phaseOf(alt);
+  $('arplaninfo').innerHTML=`
+    <div class="pl"><span>太阳方位</span><b>${up?Math.round(sunAz)+'° '+compassPt(sunAz):'地平线下'}</b></div>
+    <div class="pl"><span>太阳高度</span><b>${alt.toFixed(1)}°</b></div>
+    <div class="pl"><span>影子方向</span><b>${up&&alt>.3?Math.round((sunAz+180)%360)+'° '+compassPt((sunAz+180)%360):'—'}</b></div>
+    <div class="pl"><span>光线阶段</span><b style="color:${ph.c}">${ph.n}</b></div>
+    <div class="pl"><span>日出/日落</span><b>${fmt(t.sunrise)} · ${fmt(t.sunset)}</b></div>`;
+}
+function renderAR(){
+  $('artlabel').textContent=pad(Math.floor(S.minutes/60))+':'+pad(S.minutes%60);
+  $('artslider').value=S.minutes;
+  drawARPlan();
+}
+function stopAR(){clearInterval(arPlayT);arPlayT=null;$('arPlay').classList.remove('on');$('arPlay').textContent='▶';}
+$('artslider').addEventListener('input',e=>{stopAR();S.minutes=+e.target.value;renderAR();});
+$('arPlay').onclick=()=>{if(arPlayT){stopAR();return;}$('arPlay').classList.add('on');$('arPlay').textContent='⏸';arPlayT=setInterval(()=>{S.minutes=(S.minutes+3)%1440;renderAR();},60);};
+$('arLock').onclick=()=>{arLock=!arLock;$('arLock').classList.toggle('on',arLock);$('arLock').textContent=arLock?'🔒 已锁定':'🔓 锁定方向';toast(arLock?'方向已锁定：现在拖时间轴看太阳沿轨迹移动':'方向已解锁：跟随手机转动');};
+$('arCalib').onclick=()=>{if(!arActive){toast('先开启相机再校准');return;}const p=getPos(activeDate(),S.lat,S.lng),alt=altDeg(p.alt);if(alt<-2){toast('太阳在地平线下，此刻无法用太阳校准');return;}headOff=(azDeg(p.az)-(arYaw||0));pitchOff=(alt-arPitch);toast('已按当前太阳位置校准方位');};
+function onArShown(){renderAR();}
 
 /* ===== 启动 ===== */
 loadHash();initMap();renderAll();

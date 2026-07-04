@@ -86,19 +86,27 @@
   </div>
 
   <div id="arView" class="hidden">
-    <div class="arwrap" id="arwrap">
+    <div class="arstage" id="arstage">
       <video id="arvid" playsinline muted></video>
       <canvas id="arcanvas"></canvas>
       <div class="arhud" id="arhud"></div>
-      <div class="armsg" id="armsg"></div>
-      <div class="arstart" id="arstart">
-        <div class="glyph" style="font-size:42px">📷</div>
-        <h3>AR 太阳轨迹投影</h3>
-        <p>举起手机对准天空，屏幕叠加太阳全天轨迹与当前位置。需在<b>手机浏览器</b>、<b>HTTPS 线上环境</b>下运行并授权<b>相机</b>与<b>方向传感器</b>；竖屏使用最准。</p>
-        <button class="mini gold" id="arStartBtn" style="min-height:48px;padding:0 24px;font-size:15px">开启相机与传感器</button>
+      <div class="artopbtns">
+        <button class="arbtn" id="arLock">🔓 锁定方向</button>
+        <button class="arbtn" id="arCalib">🎯 校准</button>
       </div>
+      <button class="arcamstart" id="arStartBtn">📷 开启相机 AR</button>
+      <div class="armsg" id="armsg"></div>
     </div>
-    <p style="font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:9px">AR 与定位需要 HTTPS —— 用下面的方式部署后，在手机浏览器打开本页即可。</p>
+    <div class="arctrl">
+      <span class="artlabel" id="artlabel">12:00</span>
+      <input type="range" id="artslider" min="0" max="1439" value="720" aria-label="AR 时间轴">
+      <button class="arbtn sm" id="arPlay">▶</button>
+    </div>
+    <div class="arplan">
+      <svg id="arcompass" viewBox="0 0 156 156" role="img" aria-label="平面方位图"></svg>
+      <div class="arplaninfo" id="arplaninfo"></div>
+    </div>
+    <p class="arnote">📌 用法：把手机举向天空并稳住 → 点「🔓 锁定方向」冻结方位 → 拖时间轴看太阳沿轨迹移动。若方位有偏差，把画面十字准星对准真实太阳后点「🎯 校准」。下方平面图为纯计算结果，任何时候都准确。相机 AR 需 HTTPS + 授权，方位图与时间轴不需要。</p>
   </div>
 
   <footer>时间按设备时区 · 方位以正北 0° 顺时针 · 地图 © OpenStreetMap · 天文计算基于 SunCalc 算法。城市高楼会提前遮挡地平线，请结合现场判断。</footer>
