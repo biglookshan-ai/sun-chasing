@@ -92,21 +92,27 @@
       <div class="arhud" id="arhud"></div>
       <div class="artopbtns">
         <button class="arbtn" id="arLock">🔓 锁定方向</button>
-        <button class="arbtn" id="arCalib">🎯 校准</button>
+        <button class="arbtn" id="arCalib">🎯 对准太阳</button>
       </div>
       <button class="arcamstart" id="arStartBtn">📷 开启相机 AR</button>
       <div class="armsg" id="armsg"></div>
     </div>
     <div class="arctrl">
+      <button class="arbtn sm now" id="arNow" aria-label="回到现在" title="回到现在">🕓</button>
       <span class="artlabel" id="artlabel">12:00</span>
       <input type="range" id="artslider" min="0" max="1439" value="720" aria-label="AR 时间轴">
       <button class="arbtn sm" id="arPlay">▶</button>
     </div>
     <div class="arplan">
-      <svg id="arcompass" viewBox="0 0 156 156" role="img" aria-label="平面方位图"></svg>
+      <div class="armini" id="armini">
+        <div id="armap"></div>
+        <div class="arfov"></div>
+        <div class="arself"></div>
+        <div class="arminitag">正前 ↑</div>
+      </div>
       <div class="arplaninfo" id="arplaninfo"></div>
     </div>
-    <p class="arnote">📌 用法：把手机举向天空并稳住 → 点「🔓 锁定方向」冻结方位 → 拖时间轴看太阳沿轨迹移动。若方位有偏差，把画面十字准星对准真实太阳后点「🎯 校准」。下方平面图为纯计算结果，任何时候都准确。相机 AR 需 HTTPS + 授权，方位图与时间轴不需要。</p>
+    <p class="arnote">📌 用法：切到 AR → 点「开启相机」授权 → 举起手机对着天空，画面会叠加太阳全天轨迹；拖时间轴看太阳移动，点 🕓 回到此刻。底部小地图跟着手机转动，<b>正上方＝你正对的方向</b>，方便对照街区。方位有偏差时，把十字准星对准真实太阳再点「🎯 对准太阳」。相机需 HTTPS + 授权，时间轴与地图不需要。</p>
   </div>
 
   <footer>时间按设备时区 · 方位以正北 0° 顺时针 · 地图 © OpenStreetMap · 天文计算基于 SunCalc 算法。城市高楼会提前遮挡地平线，请结合现场判断。</footer>

@@ -88,18 +88,27 @@
   .arstage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);height:min(48vh,440px);background:#05070f;display:grid;place-items:center}
   #arvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   #arcanvas{position:absolute;inset:0;width:100%;height:100%}
-  .arcamstart{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border:none;font-weight:600;border-radius:12px;min-height:48px;padding:0 22px;font-size:15px;z-index:9}
-  .artopbtns{position:absolute;top:calc(10px + var(--safe-t));right:10px;display:flex;gap:7px;z-index:11}
-  .arbtn{background:rgba(8,12,30,.82);border:1px solid var(--line);color:var(--ink);border-radius:10px;min-height:40px;padding:0 13px;font-size:13px;font-weight:500;backdrop-filter:blur(6px);display:inline-flex;align-items:center;gap:6px}
+  .arcamstart{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border:none;font-weight:700;border-radius:14px;min-height:50px;padding:0 24px;font-size:15px;z-index:9;box-shadow:0 8px 24px rgba(240,178,74,.35)}
+  .artopbtns{position:absolute;top:calc(10px + var(--safe-t));right:10px;display:flex;gap:8px;z-index:11}
+  .arbtn{background:rgba(10,15,35,.7);border:1px solid rgba(255,255,255,.12);color:var(--ink);border-radius:12px;min-height:40px;padding:0 14px;font-size:13px;font-weight:600;backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(0,0,0,.35);display:inline-flex;align-items:center;gap:6px;transition:.15s}
   .arbtn:active{transform:scale(.96)}
-  .arbtn.on{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border:none;font-weight:600}
-  .arbtn.sm{min-width:44px;justify-content:center;padding:0 12px}
+  .arbtn.on{background:linear-gradient(180deg,#F0B24A,#E29B34);color:#2a1c04;border-color:transparent;font-weight:700;box-shadow:0 4px 16px rgba(240,178,74,.4)}
+  .arbtn.sm{min-width:46px;justify-content:center;padding:0 12px;font-size:15px}
+  .arbtn.now{color:var(--gold)}
   .armsg{position:absolute;bottom:12px;left:12px;right:12px;background:rgba(8,12,30,.9);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--rose);z-index:12;text-align:center;backdrop-filter:blur(6px);display:none;line-height:1.6}
-  .arhud{position:absolute;top:calc(10px + var(--safe-t));left:12px;background:rgba(8,12,30,.82);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:12px;z-index:11;backdrop-filter:blur(6px);display:none;line-height:1.65}
+  .arhud{position:absolute;top:calc(10px + var(--safe-t));left:12px;background:rgba(10,15,35,.7);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:12px;z-index:11;backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(0,0,0,.35);display:none;line-height:1.65}
   .arctrl{display:flex;align-items:center;gap:11px;margin-top:12px;background:linear-gradient(180deg,rgba(28,38,80,.5),rgba(21,28,59,.5));border:1px solid var(--line);border-radius:14px;padding:12px 14px}
   .artlabel{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;min-width:64px}
   .arplan{display:flex;align-items:center;gap:16px;margin-top:12px;background:linear-gradient(180deg,rgba(28,38,80,.5),rgba(21,28,59,.5));border:1px solid var(--line);border-radius:14px;padding:14px}
-  #arcompass{width:130px;height:130px;flex:none}
+  .armini{position:relative;width:154px;height:154px;flex:none;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#0c1226;box-shadow:inset 0 0 22px rgba(0,0,0,.5)}
+  #armap{position:absolute;top:50%;left:50%;width:232px;height:232px;transform:translate(-50%,-50%);transform-origin:center center;will-change:transform;transition:transform .08s linear}
+  .armini .leaflet-container{background:#0c1226}
+  .arfov{position:absolute;left:50%;top:50%;width:106px;height:80px;transform:translate(-50%,-100%);background:linear-gradient(to top,rgba(240,178,74,.45),rgba(240,178,74,0));clip-path:polygon(50% 100%,0 0,100% 0);pointer-events:none;z-index:5}
+  .arself{position:absolute;left:50%;top:50%;width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(240,178,74,.3);pointer-events:none;z-index:6}
+  .arminitag{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--gold);background:rgba(8,12,30,.72);border-radius:999px;padding:3px 10px;pointer-events:none;z-index:6;backdrop-filter:blur(4px)}
+  .pin.sm{width:12px;height:12px;box-shadow:0 0 0 2px rgba(240,178,74,.35),0 0 12px rgba(240,178,74,.6)}
+  .arsun{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff,#F0B24A 68%,#E29B34);box-shadow:0 0 10px rgba(240,178,74,.9),0 0 20px rgba(240,178,74,.5)}
+  .armini-n{font:700 12px 'Space Grotesk',sans-serif;color:#F0B24A;text-align:center;text-shadow:0 0 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9)}
   .arplaninfo{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
   .arplaninfo .pl{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(41,53,103,.5);padding-bottom:6px}
   .arplaninfo .pl:last-child{border-bottom:none;padding-bottom:0}
