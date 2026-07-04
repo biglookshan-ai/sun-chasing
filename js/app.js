@@ -298,7 +298,10 @@ $('artslider').addEventListener('input',e=>{stopAR();S.minutes=+e.target.value;r
 $('arPlay').onclick=()=>{if(arPlayT){stopAR();return;}$('arPlay').classList.add('on');$('arPlay').textContent='⏸';arPlayT=setInterval(()=>{S.minutes=(S.minutes+3)%1440;renderAR();},60);};
 $('arNow').onclick=()=>{stopAR();const n=new Date();S.date=new Date();S.minutes=n.getHours()*60+n.getMinutes();renderAR();toast('已回到当前时刻');};
 $('arLock').onclick=()=>{arLock=!arLock;$('arLock').classList.toggle('on',arLock);$('arLock').textContent=arLock?'🔒 已锁定':'🔓 锁定方向';toast(arLock?'方向已锁定：现在拖时间轴看太阳沿轨迹移动':'方向已解锁：跟随手机转动');};
-$('arCalib').onclick=()=>{if(!arActive){toast('先开启相机再校准');return;}const p=getPos(activeDate(),S.lat,S.lng),alt=altDeg(p.alt);if(alt<-2){toast('太阳在地平线下，此刻无法用太阳校准');return;}headOff=(azDeg(p.az)-(arYaw||0));pitchOff=(alt-arPitch);toast('已按当前太阳位置校准方位');};
+$('arCalib').onclick=()=>{if(!arActive){toast('先开启相机再校准');return;}
+  const p=getPos(new Date(),S.lat,S.lng),alt=altDeg(p.alt); // 始终用真实此刻的太阳，与时间轴无关
+  if(alt<-2){toast('太阳在地平线下，此刻无法用太阳校准');return;}
+  headOff=(azDeg(p.az)-(arYaw||0));pitchOff=(alt-arPitch);toast('已按此刻真实太阳位置校准');};
 function onArShown(){initARMap();renderAR();setARMapRotation();if(armReady)setTimeout(()=>{armap.invalidateSize();armap.setView([S.lat,S.lng],armap.getZoom(),{animate:false});},120);}
 
 /* ===== 启动 ===== */
