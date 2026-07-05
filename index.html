@@ -3,31 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0B1128">
+<meta name="theme-color" content="#05060c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SunPath">
 <meta name="format-detection" content="telephone=no">
-<title>晷 · SunPath — 太阳方位 / 影子 / AR</title>
+<title>晷 · SunPath — 太阳 / 月亮 / 天气 / 取景器 / AR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="bgfx" aria-hidden="true"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span><div class="grid-lines"></div></div>
 <div class="wrap">
   <header>
-    <div class="brand"><div class="glyph">晷</div><div><h1>Sun<span>Path</span></h1><p>地图 · 时间轴 · 实时影子 · AR</p></div></div>
-    <div class="tabs">
-      <button class="tab on" data-view="map">🗺 地图</button>
-      <button class="tab" data-view="ar">📷 AR</button>
-    </div>
+    <div class="brand"><div class="glyph">晷</div><div><h1>Sun<span>Path</span></h1><p>太阳 · 月亮 · 天气 · 取景器 · AR</p></div></div>
+    <nav class="tabs" id="tabs">
+      <span class="tab-ind" id="tabInd"></span>
+      <button class="tab on" data-view="map">🗺 <span>地图</span></button>
+      <button class="tab" data-view="lens">🎞 <span>取景器</span></button>
+      <button class="tab" data-view="ar">📷 <span>AR</span></button>
+    </nav>
   </header>
 
-  <div id="mapView">
+  <!-- ============ 地图 ============ -->
+  <section id="mapView" class="view">
     <div class="mapwrap">
       <div id="map"></div>
-      <div class="mapfail" id="mapfail">地图瓦片未加载（预览沙盒或离线环境会拦截外部地图）。<br>部署到线上后即可正常显示地图、搜索与影子叠加。<br>下方罗盘、高度曲线与全部数值不依赖地图，始终可用。</div>
+      <div class="mapfail" id="mapfail">地图瓦片未加载（预览沙盒或离线环境会拦截外部地图）。<br>部署到线上后即可正常显示地图、搜索与叠加。<br>下方罗盘、曲线、取景器与全部数值不依赖地图，始终可用。</div>
       <div class="searchbar">
         <input class="q" id="q" placeholder="搜索地名（如 Tower Bridge）…" aria-label="搜索地名" enterkeyhint="search">
         <button class="mini" id="searchBtn">搜索</button>
@@ -42,6 +46,11 @@
         <span class="next" id="nextEvt"></span>
         <button class="share" id="shareBtn">🔗 分享机位</button>
       </div>
+
+      <div class="weatherbar" id="weatherBar">
+        <div class="wx-load">☁ 天气加载中…</div>
+      </div>
+
       <div class="dockrow">
         <button class="nav" id="prevDay" aria-label="前一天">‹</button>
         <input type="date" id="datePick" aria-label="日期">
@@ -63,29 +72,68 @@
 
     <div class="grid">
       <div class="card">
-        <h2>方位罗盘 · 太阳轨迹</h2>
-        <svg id="compass" viewBox="0 0 360 360" role="img" aria-label="太阳方位罗盘"></svg>
+        <h2>方位罗盘 · 日月轨迹</h2>
+        <svg id="compass" viewBox="0 0 360 360" role="img" aria-label="日月方位罗盘"></svg>
         <div class="leg">
-          <span><i class="dot" style="background:var(--gold)"></i>日出</span>
-          <span><i class="dot" style="background:var(--rose)"></i>日落</span>
+          <span><i class="dot" style="background:var(--gold)"></i>太阳</span>
+          <span><i class="dot" style="background:var(--moon)"></i>月亮</span>
           <span><i class="dot" style="background:#fff"></i>此刻</span>
-          <span><i class="dot" style="background:#5B8FD6"></i>影子</span>
+          <span><i class="dot" style="background:var(--blue)"></i>影子</span>
         </div>
       </div>
       <div class="card">
-        <h2>全天太阳高度 · 光线阶段</h2>
-        <svg id="skyarc" viewBox="0 0 560 300" role="img" aria-label="太阳高度曲线"></svg>
+        <h2>全天高度 · 光线阶段</h2>
+        <svg id="skyarc" viewBox="0 0 560 300" role="img" aria-label="太阳月亮高度曲线"></svg>
         <div class="leg">
-          <span><i class="sw" style="background:#243a6e"></i>暮光</span>
+          <span><i class="sw" style="background:var(--gold)"></i>太阳</span>
+          <span><i class="sw" style="background:var(--moon)"></i>月亮</span>
           <span><i class="sw" style="background:#3f63a8"></i>蓝调</span>
           <span><i class="sw" style="background:#e8a33d"></i>黄金</span>
-          <span><i class="sw" style="background:#7fa8dd"></i>白昼</span>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div id="arView" class="hidden">
+  <!-- ============ 取景器 / 焦段模拟 ============ -->
+  <section id="lensView" class="view hidden">
+    <div class="lenshead">
+      <div class="seg" id="sensorSeg" role="tablist" aria-label="传感器画幅"></div>
+      <button class="ctl" id="orientBtn">🔁 横构图</button>
+    </div>
+    <div class="focalrow">
+      <div class="focalpresets" id="focalPresets"></div>
+      <div class="dockrow" style="margin-top:10px">
+        <span class="flabel"><b id="fval">50</b>mm</span>
+        <input type="range" id="fslider" min="8" max="600" value="50" aria-label="焦段">
+      </div>
+    </div>
+
+    <div class="vfwrap">
+      <svg id="viewfinder" viewBox="0 0 400 267" role="img" aria-label="取景器模拟"></svg>
+    </div>
+
+    <div class="aimrow">
+      <button class="chip aim" id="aimSun">☀ 对准太阳</button>
+      <button class="chip aim" id="aimMoon">🌙 对准月亮</button>
+      <button class="chip" id="aimReset">↺ 平视正北</button>
+    </div>
+    <div class="dockrow"><span class="flabel sm">机位朝向 <b id="aimAzV">0°</b></span><input type="range" id="aimAz" min="0" max="359" value="0" aria-label="机位方位"></div>
+    <div class="dockrow"><span class="flabel sm">机位仰角 <b id="aimAltV">10°</b></span><input type="range" id="aimAlt" min="-20" max="85" value="10" aria-label="机位仰角"></div>
+
+    <div class="dock lensdock">
+      <div class="dockrow">
+        <button class="ctl sm" id="lensNow">🕓 现在</button>
+        <div class="tlabel sm" id="lensTlabel">12:00</div>
+        <input type="range" id="lensTslider" min="0" max="1439" value="720" aria-label="取景器时间轴">
+        <button class="ctl sm" id="lensPlay">▶</button>
+      </div>
+      <div class="readout" id="lensInfo"></div>
+    </div>
+    <p class="note">🎞 取景器把太阳/月亮按真实透视（直线镜头）投到你选的画幅+焦段的画面里：<b>亮点=此刻位置，细线=全天轨迹划过画面</b>。选画幅与焦段、横竖构图，再用「对准太阳/月亮」或拖朝向/仰角滑块摆好机位，即可预演日月落在画面的哪个格。等效焦距与视场角实时显示。</p>
+  </section>
+
+  <!-- ============ AR ============ -->
+  <section id="arView" class="view hidden">
     <div class="arstage" id="arstage">
       <video id="arvid" playsinline muted></video>
       <canvas id="arcanvas"></canvas>
@@ -112,10 +160,10 @@
       </div>
       <div class="arplaninfo" id="arplaninfo"></div>
     </div>
-    <p class="arnote">📌 用法：切到 AR → 点「开启相机」授权 → 举起手机对着天空，画面会叠加太阳全天轨迹；拖时间轴看太阳移动，点 🕓 回到此刻。底部小地图跟着手机转动，<b>正上方＝你正对的方向</b>，方便对照街区。方位有偏差时，把十字准星对准真实太阳再点「🎯 对准太阳」。相机需 HTTPS + 授权，时间轴与地图不需要。</p>
-  </div>
+    <p class="note">📌 切到 AR → 点「开启相机」授权 → 举起手机对着天空，画面叠加<b>太阳(金)与月亮(青)</b>全天轨迹；拖时间轴看它们移动，点 🕓 回到此刻。底部小地图跟着手机转动，<b>正上方＝你正对的方向</b>。方位有偏差时把十字准星对准真实太阳再点「🎯 对准太阳」。相机需 HTTPS + 授权，其余无需。</p>
+  </section>
 
-  <footer>时间按设备时区 · 方位以正北 0° 顺时针 · 地图 © OpenStreetMap · 天文计算基于 SunCalc 算法。城市高楼会提前遮挡地平线，请结合现场判断。</footer>
+  <footer>时间按设备时区 · 方位以正北 0° 顺时针 · 地图 © OpenStreetMap · 天气 © Open-Meteo · 天文计算基于 SunCalc 算法（太阳 + 月亮）。城市高楼会提前遮挡地平线，请结合现场判断。</footer>
 </div>
 <div class="toast" id="toast"></div>
 
